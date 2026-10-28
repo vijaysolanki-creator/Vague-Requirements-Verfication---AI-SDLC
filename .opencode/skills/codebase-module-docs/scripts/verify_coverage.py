@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify every non-skipped file in the manifest has a doc, and run style checks.
+"""Verify every non-skipped file appears in its module doc, plus style checks.
 
 Usage: python verify_coverage.py <output_folder>
 Writes <output_folder>/_coverage.md. Exit code 1 if anything is missing.
@@ -9,7 +9,12 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
-REQUIRED_HEADINGS = ["## Purpose", "## Features offered", "## Keywords", "## Dependencies", "## Data flow"]
+REQUIRED = ["## Purpose", "## Features", "## Files", "## Dependencies", "## Data flow", "## Keywords"]
+EM_DASH = "\u2014"
+
+
+def slug(module):
+    return module.replace("/", "-").replace("\\", "-")
 
 
 def main():
@@ -20,50 +25,54 @@ def main():
     manifest = json.loads((out / "_manifest.json").read_text())
     files, skipped = manifest["files"], manifest["skipped"]
 
-    missing, incomplete, dashes = [], [], []
-    per_mod = defaultdict(lambda: [0, 0])
+    by_mod = defaultdict(list)
     for f in files:
-        doc = out / f["module"] / "files" / (f["path"] + ".md")
-        per_mod[f["module"]][1] += 1
-        if not doc.exists():
-            missing.append(f["path"])
-            continue
-        per_mod[f["module"]][0] += 1
-        text = doc.read_text()
-        gaps = [h for h in REQUIRED_HEADINGS if h not in text]
-        if gaps:
-            incomplete.append((f["path"], gaps))
-        if "\u2014" in text:
-            dashes.append(str(doc.relative_to(out)))
+        by_mod[f["module"]].append(f["path"])
 
-    no_overview = [m for m in per_mod if not (out / m / "overview.md").exists()]
+    missing_files, no_doc, bad_sections = [], [], []
+    per_mod = {}
+    for mod, paths in sorted(by_mod.items()):
+        doc = out / "modules" / f"{slug(mod)}.md"
+        if not doc.exists():
+            no_doc.append(mod)
+            missing_files += paths
+            per_mod[mod] = (0, len(paths))
+            continue
+        text = doc.read_text()
+        absent = [p for p in paths if f"`{p}`" not in text]
+        missing_files += absent
+        per_mod[mod] = (len(paths) - len(absent), len(paths))
+        gaps = [h for h in REQUIRED if h not in text]
+        if gaps:
+            bad_sections.append((mod, gaps))
+
     system_missing = [n for n in ("README.md", "architecture.md", "glossary.md") if not (out / n).exists()]
-    for p in out.rglob("*.md"):
-        if "\u2014" in p.read_text() and str(p.relative_to(out)) not in dashes:
-            dashes.append(str(p.relative_to(out)))
+    dashes = [str(p.relative_to(out)) for p in out.rglob("*.md")
+              if p.name != "_coverage.md" and EM_DASH in p.read_text()]
 
     total = len(files)
-    done = total - len(missing)
+    done = total - len(missing_files)
     pct = 100 if total == 0 else round(done * 100 / total, 1)
 
-    lines = ["# Coverage", "", f"Documented: {done} / {total} ({pct}%)", f"Skipped: {len(skipped)}", ""]
-    lines += ["## Per module", "", "| Module | Documented | Total |", "|---|---|---|"]
-    lines += [f"| {m} | {d} | {t} |" for m, (d, t) in sorted(per_mod.items())]
-    lines += ["", "## Missing file docs"] + ([f"- {p}" for p in missing] or ["None"])
-    lines += ["", "## Docs missing required sections"] + ([f"- {p}: {', '.join(g)}" for p, g in incomplete] or ["None"])
-    lines += ["", "## Modules without overview.md"] + ([f"- {m}" for m in no_overview] or ["None"])
-    lines += ["", "## Missing system docs"] + ([f"- {n}" for n in system_missing] or ["None"])
-    lines += ["", "## Docs containing em dashes"] + ([f"- {p}" for p in dashes] or ["None"])
-    lines += ["", "## Skipped files", "", "| Path | Reason |", "|---|---|"]
-    lines += [f"| {s['path']} | {s['reason']} |" for s in skipped] or ["| None | |"]
-    (out / "_coverage.md").write_text("\n".join(lines) + "\n")
+    L = ["# Coverage", "", f"Files covered: {done} / {total} ({pct}%)", f"Skipped: {len(skipped)}", "",
+         "## Per module", "", "| Module | Covered | Total |", "|---|---|---|"]
+    L += [f"| {m} | {d} | {t} |" for m, (d, t) in per_mod.items()]
+    L += ["", "## Modules without a doc"] + ([f"- {m}" for m in no_doc] or ["None"])
+    L += ["", "## Files missing from their module doc"] + ([f"- {p}" for p in missing_files] or ["None"])
+    L += ["", "## Module docs missing sections"] + ([f"- {m}: {', '.join(g)}" for m, g in bad_sections] or ["None"])
+    L += ["", "## Missing system docs"] + ([f"- {n}" for n in system_missing] or ["None"])
+    L += ["", "## Docs containing em dashes"] + ([f"- {p}" for p in dashes] or ["None"])
+    L += ["", "## Skipped files", "", "| Path | Reason |", "|---|---|"]
+    L += [f"| {s['path']} | {s['reason']} |" for s in skipped] or ["| None | |"]
+    (out / "_coverage.md").write_text("\n".join(L) + "\n")
 
-    print(f"Documented {done}/{total} ({pct}%)")
-    for label, items in (("missing", missing), ("incomplete", incomplete), ("no overview", no_overview),
-                         ("system docs missing", system_missing), ("em dashes", dashes)):
+    print(f"Covered {done}/{total} ({pct}%)")
+    for label, items in (("modules without doc", no_doc), ("files missing", missing_files),
+                         ("docs missing sections", bad_sections), ("system docs missing", system_missing),
+                         ("em dashes", dashes)):
         if items:
             print(f"  {label}: {len(items)}")
-    ok = not (missing or incomplete or no_overview or system_missing or dashes)
+    ok = not (no_doc or missing_files or bad_sections or system_missing or dashes)
     print("PASS" if ok else "FAIL: fix and rerun")
     sys.exit(0 if ok else 1)
 

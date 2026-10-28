@@ -1,114 +1,62 @@
 # Templates
 
-Use these exactly. Omit a section only if it truly does not apply, and then write `None` rather than deleting it, so every doc has the same shape.
+Use the same shape for every doc. If a section does not apply, write `None`. No em dashes.
 
-No em dashes in any generated doc.
-
-## File doc template
-
-Path: `<output>/<module>/files/<relative_path>.md`
+## Module doc: `modules/<slug>.md`
 
 ```markdown
-# <relative/path/to/file.ext>
+# <Module or feature name>
 
 | Field | Value |
 |---|---|
-| Module | <module> |
-| Layer | frontend / backend / shared / config / test |
-| Language | <language> |
-| Lines | <n> |
+| Layer | frontend / backend / shared / full-stack |
+| Path(s) | <main folders> |
+| Files covered | <n> |
 
 ## Purpose
-One or two sentences: why this file exists.
-
-## Responsibilities
-- <what it owns, one bullet each>
-
-## Features offered
-- <capability a caller or end user gets from this file>
-
-## Keywords
-`TermOne`, `functionName`, `/api/route`, `ENV_VAR`, `EventName`
-(One line each below if a term needs a meaning.)
-- `TermOne`: <meaning>
-
-## Dependencies
-| Type | Name | Why |
-|---|---|---|
-| Internal | `../auth/session.ts` | <reason> |
-| External | `express` | <reason> |
-| Service | PostgreSQL | <reason> |
-| Env var | `JWT_SECRET` | <reason> |
-
-## Data flow
-- **Inputs:** <args, request body, props, events, config>
-- **Outputs:** <return values, responses, rendered UI, emitted events>
-- **Side effects:** <DB writes, network calls, file IO, global state, logs>
-- **Called by:** <files or routes that use this>
-
-## Notes
-Edge cases, risks, TODOs, or `Unclear from code: ...`. Write `None` if empty.
-```
-
-Frontend extras (add under Data flow): route or screen, props, local and global state, API calls made.
-
-Backend extras (add under Data flow): endpoints exposed (method and path), models touched, auth and validation applied, jobs, queues, or events handled.
-
-## Module overview template
-
-Path: `<output>/<module>/overview.md`
-
-```markdown
-# Module: <module>
-
-| Field | Value |
-|---|---|
-| Layer | frontend / backend / shared |
-| Path | <module path> |
-| Files documented | <n> |
-
-## Purpose
-What this module is for, in two or three sentences.
+Two or three sentences: what this module is for and who or what uses it.
 
 ## Features
-- <user or system capability, one bullet each>
+- <capability a user or another module gets, one bullet each>
 
-## Structure
-| File | Purpose | Doc |
+## Files
+| File | Layer | Role |
 |---|---|---|
-| `src/a.ts` | <one line> | [link](files/src/a.ts.md) |
+| `src/auth/login.ts` | backend | <one line: what it does and why it exists> |
+| `src/ui/LoginForm.tsx` | frontend | <one line> |
 
 ## Dependencies
-- **Depends on (internal modules):** <list>
-- **Used by (internal modules):** <list>
-- **External packages and services:** <list>
+- **Internal modules used:** <list>
+- **Used by:** <list>
+- **External packages and services:** <list with why>
 - **Env vars and config:** <list>
 
 ## Data flow
-Describe the main flow end to end (entry point, processing, storage or output). Use a numbered list or a Mermaid diagram.
+Numbered list (or Mermaid diagram) of the main flow: entry point, processing, storage or output. Include inputs, outputs, and side effects (DB, network, files, state). For backend note endpoints (method and path), models, and auth. For frontend note routes or screens, state, and API calls.
 
 ## Keywords
-Alphabetical list with a short meaning each.
+- `TermOrIdentifier`: <short meaning>
+(domain terms, key functions, routes, events, config keys)
 
 ## Risks and gaps
-Dead code, missing validation, tight coupling, unclear areas. Write `None` if empty.
+Dead code, missing validation, tight coupling, `Unclear from code: ...`. Write `None` if empty.
 ```
 
 ## architecture.md outline
 
 1. System summary (3 to 5 lines)
 2. Layer map (frontend, backend, shared, infra) as a table
-3. Module map with one-line purpose each
+3. Module map: module, purpose, link to its doc
 4. Module dependency diagram (Mermaid `graph TD`)
-5. Key flows (for example login, main create/read flow), each as a numbered list across modules
+5. Key flows across modules (for example login, main create/read flow)
 6. External systems and integrations
-7. Cross-cutting concerns: auth, error handling, logging, config
+7. Cross-cutting concerns: auth, errors, logging, config
 8. Known risks and gaps
 
 ## glossary.md outline
 
-Alphabetical table: `Term | Meaning | Where used (module or file)`.
+Alphabetical table: `Term | Meaning | Module doc`.
 
 ## README.md outline
 
-Title, one-paragraph summary, link to `architecture.md` and `glossary.md`, table of modules linking each `overview.md`, link to `_coverage.md`.
+Title, one-paragraph summary, links to `architecture.md`, `glossary.md`, `_coverage.md`, and a table of modules linking each doc.

@@ -129,7 +129,7 @@ def main():
     by_mod = defaultdict(list)
     for f in files:
         by_mod[f["module"]].append(f)
-    lines = ["# Progress", "", "Tick each file after its doc is written.", ""]
+    lines = ["# Progress", "", "Tick each file after its row is added to its module doc.", ""]
     for mod, fs in by_mod.items():
         lines.append(f"## {mod}")
         lines += [f"- [ ] {f['path']}" for f in fs]
