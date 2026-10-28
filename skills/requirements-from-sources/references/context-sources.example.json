@@ -1,0 +1,73 @@
+{
+  "version": 1,
+  "project": "Replace with your project name",
+  "defaults": {
+    "precedence": ["approved-document", "client-written", "decision-record", "internal-chat", "draft", "verbal"],
+    "max_items_per_source": 25,
+    "redact": ["email", "phone", "api_key"],
+    "ask_before_unregistered": true,
+    "stale_after_days": 14
+  },
+  "sources": [
+    {
+      "id": "example-team-chat",
+      "name": "Project chat channel",
+      "kind": "team chat",
+      "enabled": false,
+      "access": { "method": "connector", "hint": "Chat connector, channel name here" },
+      "location": "#project-channel",
+      "covers": ["client requests", "decisions", "bug reports"],
+      "trust": "medium",
+      "freshness": "live",
+      "sensitivity": "confidential",
+      "owner": "Delivery lead",
+      "retrieval": { "time_window": "last 90 days", "queries_hint": "feature keywords, client name" },
+      "notes": "Set enabled to true once this entry is real."
+    },
+    {
+      "id": "example-client-email",
+      "name": "Client email threads",
+      "kind": "email",
+      "enabled": false,
+      "access": { "method": "paste", "hint": "User exports or pastes threads" },
+      "location": "Shared mailbox or user-provided",
+      "covers": ["client requests", "approvals", "scope changes"],
+      "trust": "high",
+      "freshness": "dated",
+      "sensitivity": "confidential",
+      "owner": "Account manager",
+      "retrieval": { "time_window": "since project kickoff", "queries_hint": "subject lines, client name" },
+      "notes": ""
+    },
+    {
+      "id": "example-meeting-transcripts",
+      "name": "Client meeting transcripts",
+      "kind": "meeting transcript",
+      "enabled": false,
+      "access": { "method": "file", "hint": "Folder path with transcript files" },
+      "location": "./meetings/",
+      "covers": ["decisions", "requirements stated", "action items"],
+      "trust": "medium",
+      "freshness": "static",
+      "sensitivity": "confidential",
+      "owner": "Product manager",
+      "retrieval": { "time_window": "all", "queries_hint": "feature name, client name" },
+      "notes": "Prefer transcripts over auto-generated summaries."
+    },
+    {
+      "id": "example-spec-docs",
+      "name": "Specs and requirement documents",
+      "kind": "document",
+      "enabled": false,
+      "access": { "method": "url", "hint": "Wiki space or shared drive folder" },
+      "location": "Wiki space name here",
+      "covers": ["approved scope", "business rules", "policies"],
+      "trust": "high",
+      "freshness": "dated",
+      "sensitivity": "internal",
+      "owner": "Product owner",
+      "retrieval": { "time_window": "all", "queries_hint": "feature name, policy names" },
+      "notes": "Check document status: draft or approved."
+    }
+  ]
+}
